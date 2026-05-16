@@ -910,7 +910,27 @@ function showToast(msg,type){
 }
 
 // INIT
+function migrateHistoryDates() {
+  // Fix entries where date was saved in UTC instead of local time
+  // If the stored date is ahead of the local date derived from the timestamp, correct it
+  var history = getHistory();
+  var changed = false;
+  history.forEach(function(entry) {
+    if (!entry.timestamp) return;
+    var localDate = new Date(entry.timestamp);
+    var month = String(localDate.getMonth()+1).padStart(2,'0');
+    var day = String(localDate.getDate()).padStart(2,'0');
+    var correctDate = localDate.getFullYear()+'-'+month+'-'+day;
+    if (entry.date !== correctDate) {
+      entry.date = correctDate;
+      changed = true;
+    }
+  });
+  if (changed) safeSet('forge_history', history);
+}
+
 document.addEventListener('DOMContentLoaded',function(){
+  migrateHistoryDates();
   initHeader();
   buildTabs();
   updateAnalytics();
